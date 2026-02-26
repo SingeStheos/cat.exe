@@ -10,6 +10,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Debug Boost presence
