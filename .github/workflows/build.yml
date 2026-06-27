@@ -1,35 +1,39 @@
-name: Build Windows Executable
+name: Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            output: main
+            compiler: g++
+          - os: windows-latest
+            output: main.exe
+            compiler: g++
+          - os: macos-latest
+            output: main
+            compiler: clang++
 
     steps:
-      - name: Checkout repository (with submodules)
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
 
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Debug Boost presence
-        run: |
-          Write-Host "===== Folders containing .hpp files ====="
-          Get-ChildItem -Recurse -Filter *.hpp | 
-              Select-Object DirectoryName -Unique
-          
-      - name: Build main.cpp
-        run: |
-          mkdir build
-          cl /DUNICODE /D_UNICODE /EHsc main.cpp user32.lib /link /SUBSYSTEM:WINDOWS /OUT:build/main.exe
-      - name: Upload executable
+      - name: Build
+        run: ${{ matrix.compiler }} -std=c++17 -O2 -o ${{ matrix.output }} main.cpp
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-executable
-          path: build/main.exe
+          name: main-${{ matrix.os }}
+          path: ${{ matrix.output }}
